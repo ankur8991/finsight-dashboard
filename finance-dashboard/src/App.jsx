@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Wallet,
@@ -49,6 +49,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 function App() {
 
+  const mainRef = useRef(null);
+
   const [darkMode, setDarkMode] = useState(true);
   const [role, setRole] = useState("admin");
   const [search, setSearch] = useState("");
@@ -94,6 +96,20 @@ function App() {
     amount: "",
     status: "Completed",
   });
+  const dashboardRef = useRef(null);
+  const transactionsRef = useRef(null);
+  const insightsRef = useRef(null);
+  const settingsRef = useRef(null);
+
+
+  const scrollToSection = (ref) => {
+  if (mainRef.current && ref.current) {
+    mainRef.current.scrollTo({
+      top: ref.current.offsetTop - 76,
+      behavior: "smooth",
+    });
+  }
+};
 
 
   const totalIncome = transactions
@@ -237,7 +253,8 @@ function App() {
           <nav className="space-y-3">
             {/* Active Item */}
             <div
-              className={`h-11 rounded-xl px-4 flex items-center font-medium transition-colors duration-200 ${darkMode
+              onClick={() => scrollToSection(dashboardRef)}
+              className={`h-11 rounded-xl px-4 flex items-center font-medium cursor-pointer transition-colors duration-200 ${darkMode
                 ? "bg-slate-800 text-white"
                 : "bg-slate-300 text-slate-900"
                 }`}
@@ -247,6 +264,7 @@ function App() {
 
             {/* Hover Items */}
             <div
+              onClick={() => scrollToSection(transactionsRef)}
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
                 ? "text-slate-300 hover:bg-slate-800 hover:text-white"
                 : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
@@ -256,6 +274,7 @@ function App() {
             </div>
 
             <div
+              onClick={() => scrollToSection(insightsRef)}
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
                 ? "text-slate-300 hover:bg-slate-800 hover:text-white"
                 : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
@@ -265,9 +284,10 @@ function App() {
             </div>
 
             <div
+              onClick={() => scrollToSection(settingsRef)}
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
+                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
                 }`}
             >
               Settings
@@ -276,9 +296,9 @@ function App() {
         </aside>
 
         {/* Dashboard Content */}
-        <main className="ml-[260px] mt-[72px] h-[calc(100vh-72px)] overflow-y-auto p-6 space-y-6 w-[calc(100vw-260px)]">
+        <main ref={mainRef} className="ml-[260px] mt-[72px] h-[calc(100vh-72px)] overflow-y-auto p-6 space-y-6 w-[calc(100vw-260px)]">
           {/* Summary Cards */}
-          <section className="grid grid-cols-4 gap-6">
+          <section ref={dashboardRef} className="grid grid-cols-4 gap-6">
             {/* Total Balance */}
             <Card
               className={`h-[120px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
@@ -410,6 +430,7 @@ function App() {
 
           {/* Transactions */}
           <section
+          ref={transactionsRef}
             className={`rounded-2xl p-6 shadow-sm transition-colors duration-300 ${darkMode
               ? "border border-slate-800 bg-slate-900"
               : "border border-slate-300 bg-slate-200"
@@ -590,7 +611,7 @@ function App() {
           </section>
 
           {/* Insights */}
-          <section className="grid grid-cols-3 gap-6">
+          <section ref={insightsRef} className="grid grid-cols-3 gap-6">
             {/* Highest Spending */}
             <Card
               className={`h-[140px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
@@ -672,6 +693,71 @@ function App() {
               </CardContent>
             </Card>
           </section>
+
+
+         {/* Settings */}
+         <section
+  ref={settingsRef}
+  className={`rounded-2xl p-6 shadow-sm transition-colors duration-300 ${
+    darkMode
+      ? "border border-slate-800 bg-slate-900"
+      : "border border-slate-300 bg-slate-200"
+  }`}
+>
+  <div className="space-y-4">
+    <div>
+      <h3
+        className={`text-lg font-semibold ${
+          darkMode ? "text-white" : "text-slate-900"
+        }`}
+      >
+        Preferences
+      </h3>
+      <p
+        className={`text-sm ${
+          darkMode ? "text-slate-400" : "text-slate-600"
+        }`}
+      >
+        Quick overview of current dashboard configuration
+      </p>
+    </div>
+
+    <div className="grid grid-cols-3 gap-4">
+      <div
+        className={`rounded-xl p-4 ${
+          darkMode ? "bg-slate-800" : "bg-slate-300"
+        }`}
+      >
+        <p className="text-sm text-slate-400">Current Role</p>
+        <h4 className="mt-1 text-lg font-semibold capitalize">{role}</h4>
+      </div>
+
+      <div
+        className={`rounded-xl p-4 ${
+          darkMode ? "bg-slate-800" : "bg-slate-300"
+        }`}
+      >
+        <p className="text-sm text-slate-400">Theme Mode</p>
+        <h4 className="mt-1 text-lg font-semibold">
+          {darkMode ? "Dark" : "Light"}
+        </h4>
+      </div>
+
+      <div
+        className={`rounded-xl p-4 ${
+          darkMode ? "bg-slate-800" : "bg-slate-300"
+        }`}
+      >
+        <p className="text-sm text-slate-400">Transactions Count</p>
+        <h4 className="mt-1 text-lg font-semibold">
+          {transactions.length}
+        </h4>
+      </div>
+    </div>
+  </div>
+</section>
+
+
         </main>
       </div>
     </div>
