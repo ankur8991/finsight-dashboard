@@ -40,26 +40,134 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 
 
 
-const balanceTrendData = [
-  { month: "Jan", balance: 45000 },
-  { month: "Feb", balance: 52000 },
-  { month: "Mar", balance: 61000 },
-  { month: "Apr", balance: 58000 },
-  { month: "May", balance: 72000 },
-  { month: "Jun", balance: 84500 },
-];
 
 
 function App() {
 
   const [darkMode, setDarkMode] = useState(true);
   const [role, setRole] = useState("admin");
+  const [search, setSearch] = useState("");
+  const [transactions, setTransactions] = useState([
+    {
+      id: 1,
+      date: "12 Apr 2026",
+      category: "Salary",
+      type: "income",
+      amount: 85000,
+      status: "Completed",
+    },
+    {
+      id: 2,
+      date: "14 Apr 2026",
+      category: "Groceries",
+      type: "expense",
+      amount: 4500,
+      status: "Completed",
+    },
+    {
+      id: 3,
+      date: "18 Apr 2026",
+      category: "Freelance",
+      type: "income",
+      amount: 22000,
+      status: "Pending",
+    },
+    {
+      id: 4,
+      date: "21 Apr 2026",
+      category: "Rent",
+      type: "expense",
+      amount: 18000,
+      status: "Completed",
+    },
+  ]);
+  const [open, setOpen] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({
+    date: "",
+    category: "",
+    type: "expense",
+    amount: "",
+    status: "Completed",
+  });
+
+
+  const totalIncome = transactions
+    .filter((tx) => tx.type === "income")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const totalExpenses = transactions
+    .filter((tx) => tx.type === "expense")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const totalBalance = totalIncome - totalExpenses;
+
+  const savingsRate = totalIncome
+    ? ((totalBalance / totalIncome) * 100).toFixed(1)
+    : 0;
+
+  const filteredTransactions = transactions.filter((tx) =>
+    `${tx.date} ${tx.category} ${tx.type} ${tx.amount} ${tx.status}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  const highestExpense = transactions
+    .filter((tx) => tx.type === "expense")
+    .sort((a, b) => b.amount - a.amount)[0];
+
+  const balanceTrendData = transactions.map((tx, index) => ({
+    month: `T${index + 1}`,
+    balance:
+      transactions
+        .slice(0, index + 1)
+        .reduce(
+          (sum, item) =>
+            item.type === "income"
+              ? sum + item.amount
+              : sum - item.amount,
+          0
+        ),
+  }));
+
+
+  const handleAddTransaction = () => {
+    if (
+      !newTransaction.date ||
+      !newTransaction.category ||
+      !newTransaction.amount
+    ) {
+      return;
+    }
+
+    const transaction = {
+      id: Date.now(),
+      ...newTransaction,
+      amount: Number(newTransaction.amount),
+    };
+
+    setTransactions((prev) => [transaction, ...prev]);
+
+    setNewTransaction({
+      date: "",
+      category: "",
+      type: "expense",
+      amount: "",
+      status: "Completed",
+    });
+
+    setOpen(false);
+  };
+
+
+
 
   return (
+
     <div
       className={`h-screen overflow-hidden transition-colors duration-300 ${darkMode
         ? "bg-slate-950 text-white"
@@ -82,27 +190,26 @@ function App() {
 
         <div className="flex items-center gap-4">
           <Select value={role} onValueChange={setRole}>
-  <SelectTrigger
-    className={`h-10 w-32 rounded-xl ${
-      darkMode
-        ? "border-slate-700 bg-slate-900 text-white"
-        : "border-slate-300 bg-slate-200 text-slate-900"
-    }`}
-  >
-    <SelectValue placeholder="Select role" />
-  </SelectTrigger>
+            <SelectTrigger
+              className={`h-10 w-32 rounded-xl ${darkMode
+                ? "border-slate-700 bg-slate-900 text-white"
+                : "border-slate-300 bg-slate-200 text-slate-900"
+                }`}
+            >
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
 
-  <SelectContent
-    className={
-      darkMode
-        ? "border-slate-700 bg-slate-900 text-white"
-        : "border-slate-300 bg-slate-200 text-slate-900"
-    }
-  >
-    <SelectItem value="admin">Admin</SelectItem>
-    <SelectItem value="viewer">Viewer</SelectItem>
-  </SelectContent>
-</Select>
+            <SelectContent
+              className={
+                darkMode
+                  ? "border-slate-700 bg-slate-900 text-white"
+                  : "border-slate-300 bg-slate-200 text-slate-900"
+              }
+            >
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="viewer">Viewer</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             size="icon"
             variant="outline"
@@ -123,16 +230,16 @@ function App() {
         {/* Sidebar */}
         <aside
           className={`fixed left-0 top-[72px] z-40 h-[calc(100vh-72px)] w-[260px] border-r p-4 transition-colors duration-300 ${darkMode
-              ? "border-slate-800 bg-slate-900"
-              : "border-slate-300 bg-slate-200 text-slate-900"
+            ? "border-slate-800 bg-slate-900"
+            : "border-slate-300 bg-slate-200 text-slate-900"
             }`}
         >
           <nav className="space-y-3">
             {/* Active Item */}
             <div
               className={`h-11 rounded-xl px-4 flex items-center font-medium transition-colors duration-200 ${darkMode
-                  ? "bg-slate-800 text-white"
-                  : "bg-slate-300 text-slate-900"
+                ? "bg-slate-800 text-white"
+                : "bg-slate-300 text-slate-900"
                 }`}
             >
               Dashboard
@@ -141,8 +248,8 @@ function App() {
             {/* Hover Items */}
             <div
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
+                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
                 }`}
             >
               Transactions
@@ -150,8 +257,8 @@ function App() {
 
             <div
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
+                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
                 }`}
             >
               Insights
@@ -159,8 +266,8 @@ function App() {
 
             <div
               className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
+                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
                 }`}
             >
               Settings
@@ -186,7 +293,7 @@ function App() {
                 <Wallet className="h-5 w-5 text-emerald-400" />
               </CardHeader>
               <CardContent>
-                <h2 className="text-3xl font-bold">₹1,24,500</h2>
+                <h2 className="text-3xl font-bold">₹{totalBalance.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-emerald-400">
                   +12.5% from last month
                 </p>
@@ -207,7 +314,7 @@ function App() {
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
               </CardHeader>
               <CardContent>
-                <h2 className="text-3xl font-bold">₹85,000</h2>
+                <h2 className="text-3xl font-bold">₹{totalIncome.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-emerald-400">
                   +8.2% from last month
                 </p>
@@ -228,7 +335,7 @@ function App() {
                 <TrendingDown className="h-5 w-5 text-red-400" />
               </CardHeader>
               <CardContent>
-                <h2 className="text-3xl font-bold">₹42,300</h2>
+                <h2 className="text-3xl font-bold">₹{totalExpenses.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-red-400">
                   -3.8% from last month
                 </p>
@@ -249,9 +356,9 @@ function App() {
                 <PiggyBank className="h-5 w-5 text-cyan-400" />
               </CardHeader>
               <CardContent>
-                <h2 className="text-3xl font-bold">49.7%</h2>
+                <h2 className="text-3xl font-bold">{savingsRate}%</h2>
                 <p className="mt-2 text-xs text-cyan-400">
-                  ₹42,700 saved this month
+                  ₹{totalBalance.toLocaleString()} saved this month
                 </p>
               </CardContent>
             </Card>
@@ -326,16 +433,97 @@ function App() {
 
               <div className="flex items-center gap-3">
                 <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search transactions..."
                   className={`w-64 ${darkMode
                     ? "border-slate-700 bg-slate-950 text-white"
                     : "border-slate-300 bg-slate-100 text-slate-900"
                     }`}
                 />
-                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
-                </Button>
+                {role === "admin" && (
+                  <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add
+                      </Button>
+                    </DialogTrigger>
+
+                    <DialogContent
+                      className={
+                        darkMode
+                          ? "border-slate-800 bg-slate-900 text-white"
+                          : "border-slate-300 bg-slate-200 text-slate-900"
+                      }
+                    >
+                      <DialogHeader>
+                        <DialogTitle>Add Transaction</DialogTitle>
+                      </DialogHeader>
+
+                      <div className="space-y-4">
+                        <Input
+                          placeholder="Date"
+                          value={newTransaction.date}
+                          onChange={(e) =>
+                            setNewTransaction({
+                              ...newTransaction,
+                              date: e.target.value,
+                            })
+                          }
+                        />
+
+                        <Input
+                          placeholder="Category"
+                          value={newTransaction.category}
+                          onChange={(e) =>
+                            setNewTransaction({
+                              ...newTransaction,
+                              category: e.target.value,
+                            })
+                          }
+                        />
+
+                        <Select
+                          value={newTransaction.type}
+                          onValueChange={(value) =>
+                            setNewTransaction({
+                              ...newTransaction,
+                              type: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="income">Income</SelectItem>
+                            <SelectItem value="expense">Expense</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          placeholder="Amount"
+                          type="number"
+                          value={newTransaction.amount}
+                          onChange={(e) =>
+                            setNewTransaction({
+                              ...newTransaction,
+                              amount: e.target.value,
+                            })
+                          }
+                        />
+
+                        <Button
+                          onClick={handleAddTransaction}
+                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+                        >
+                          Save Transaction
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
             </div>
 
@@ -355,90 +543,48 @@ function App() {
                 </TableHeader>
 
                 <TableBody>
-                  <TableRow
-                    className={`${darkMode
-                      ? "border-slate-800 hover:bg-slate-800"
-                      : "border-slate-300 hover:bg-slate-100"
-                      }`}
-                  >
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >12 Apr 2026</TableCell>
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >Salary</TableCell>
-                    <TableCell>
-                      <Badge className="bg-emerald-500 text-white">Income</Badge>
-                    </TableCell>
-                    <TableCell className="text-emerald-400">+₹85,000</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Completed</Badge>
-                    </TableCell>
-                  </TableRow>
+                  {filteredTransactions.map((tx) => (
+                    <TableRow
+                      key={tx.id}
+                      className={`${darkMode
+                        ? "border-slate-800 hover:bg-slate-800"
+                        : "border-slate-300 hover:bg-slate-100"
+                        }`}
+                    >
+                      <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
+                        {tx.date}
+                      </TableCell>
 
-                  <TableRow
-                    className={`${darkMode
-                      ? "border-slate-800 hover:bg-slate-800"
-                      : "border-slate-300 hover:bg-slate-100"
-                      }`}
-                  >
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >14 Apr 2026</TableCell>
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >Groceries</TableCell>
-                    <TableCell>
-                      <Badge className="bg-red-500 text-white">Expense</Badge>
-                    </TableCell>
-                    <TableCell className="text-red-400">-₹4,500</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Completed</Badge>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
+                        {tx.category}
+                      </TableCell>
 
-                  <TableRow
-                    className={`${darkMode
-                      ? "border-slate-800 hover:bg-slate-800"
-                      : "border-slate-300 hover:bg-slate-100"
-                      }`}
-                  >
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >18 Apr 2026</TableCell>
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >Freelance</TableCell>
-                    <TableCell>
-                      <Badge className="bg-emerald-500 text-white">Income</Badge>
-                    </TableCell>
-                    <TableCell className="text-emerald-400">+₹22,000</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Pending</Badge>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell>
+                        <Badge
+                          className={
+                            tx.type === "income"
+                              ? "bg-emerald-500 text-white"
+                              : "bg-red-500 text-white"
+                          }
+                        >
+                          {tx.type === "income" ? "Income" : "Expense"}
+                        </Badge>
+                      </TableCell>
 
-                  <TableRow
-                    className={`${darkMode
-                      ? "border-slate-800 hover:bg-slate-800"
-                      : "border-slate-300 hover:bg-slate-100"
-                      }`}
-                  >
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >21 Apr 2026</TableCell>
-                    <TableCell
-                      className={darkMode ? "text-white" : "text-slate-900"}
-                    >Rent</TableCell>
-                    <TableCell>
-                      <Badge className="bg-red-500 text-white">Expense</Badge>
-                    </TableCell>
-                    <TableCell className="text-red-400">-₹18,000</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Completed</Badge>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell
+                        className={tx.type === "income" ? "text-emerald-400" : "text-red-400"}
+                      >
+                        {tx.type === "income" ? "+" : "-"}₹
+                        {tx.amount.toLocaleString()}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge variant="secondary">{tx.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
+
               </Table>
             </div>
           </section>
@@ -462,7 +608,7 @@ function App() {
                 <AlertTriangle className="h-5 w-5 text-red-400" />
               </CardHeader>
               <CardContent>
-                <h4 className="text-xl font-semibold">Rent • ₹18,000</h4>
+                <h4 className="text-xl font-semibold">{highestExpense?.category} • ₹{highestExpense?.amount.toLocaleString()}</h4>
                 <p
                   className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"
                     }`}
@@ -489,7 +635,7 @@ function App() {
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
               </CardHeader>
               <CardContent>
-                <h4 className="text-xl font-semibold">+18.6% Increase</h4>
+                <h4 className="text-xl font-semibold">+{savingsRate}% Increase</h4>
                 <p
                   className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"
                     }`}
@@ -516,12 +662,12 @@ function App() {
                 <Landmark className="h-5 w-5 text-cyan-400" />
               </CardHeader>
               <CardContent>
-                <h4 className="text-xl font-semibold">₹6,500 Potential</h4>
+                <h4 className="text-xl font-semibold">₹{Math.floor(totalExpenses * 0.15).toLocaleString()} Potential</h4>
                 <p
                   className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"
                     }`}
                 >
-                  Reduce food & subscriptions spending by 15%
+                  Focus on recurring expenses to improve monthly savings efficiency
                 </p>
               </CardContent>
             </Card>
