@@ -96,20 +96,48 @@ function App() {
     amount: "",
     status: "Completed",
   });
+  const [editingId, setEditingId] = useState(null);
+  const [editTransaction, setEditTransaction] = useState({
+    date: "",
+    category: "",
+    type: "income",
+    amount: "",
+    status: "Completed",
+  });
+
+
   const dashboardRef = useRef(null);
   const transactionsRef = useRef(null);
   const insightsRef = useRef(null);
   const settingsRef = useRef(null);
 
 
-  const scrollToSection = (ref) => {
-  if (mainRef.current && ref.current) {
-    mainRef.current.scrollTo({
-      top: ref.current.offsetTop - 76,
-      behavior: "smooth",
+
+  const handleEditTransaction = () => {
+    setTransactions((prev) =>
+      prev.map((tx) =>
+        tx.id === editingId
+          ? {
+            ...tx,
+            ...editTransaction,
+            amount: Number(editTransaction.amount),
+          }
+          : tx
+      )
+    );
+
+    setEditingId(null);
+    setOpen(false);
+
+    setEditTransaction({
+      date: "",
+      category: "",
+      type: "income",
+      amount: "",
+      status: "Completed",
     });
-  }
-};
+  };
+
 
 
   const totalIncome = transactions
@@ -244,59 +272,10 @@ function App() {
       {/* Main Layout */}
       <div className="flex">
         {/* Sidebar */}
-        <aside
-          className={`fixed left-0 top-[72px] z-40 h-[calc(100vh-72px)] w-[260px] border-r p-4 transition-colors duration-300 ${darkMode
-            ? "border-slate-800 bg-slate-900"
-            : "border-slate-300 bg-slate-200 text-slate-900"
-            }`}
-        >
-          <nav className="space-y-3">
-            {/* Active Item */}
-            <div
-              onClick={() => scrollToSection(dashboardRef)}
-              className={`h-11 rounded-xl px-4 flex items-center font-medium cursor-pointer transition-colors duration-200 ${darkMode
-                ? "bg-slate-800 text-white"
-                : "bg-slate-300 text-slate-900"
-                }`}
-            >
-              Dashboard
-            </div>
-
-            {/* Hover Items */}
-            <div
-              onClick={() => scrollToSection(transactionsRef)}
-              className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
-                }`}
-            >
-              Transactions
-            </div>
-
-            <div
-              onClick={() => scrollToSection(insightsRef)}
-              className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
-                }`}
-            >
-              Insights
-            </div>
-
-            <div
-              onClick={() => scrollToSection(settingsRef)}
-              className={`h-11 rounded-xl px-4 flex items-center cursor-pointer transition-colors duration-200 ${darkMode
-                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
-                }`}
-            >
-              Settings
-            </div>
-          </nav>
-        </aside>
+        
 
         {/* Dashboard Content */}
-        <main ref={mainRef} className="ml-[260px] mt-[72px] h-[calc(100vh-72px)] overflow-y-auto p-6 space-y-6 w-[calc(100vw-260px)]">
+        <main className="mt-[72px] h-[calc(100vh-72px)] overflow-y-auto p-6 space-y-6 w-full">
           {/* Summary Cards */}
           <section ref={dashboardRef} className="grid grid-cols-4 gap-6">
             {/* Total Balance */}
@@ -430,7 +409,7 @@ function App() {
 
           {/* Transactions */}
           <section
-          ref={transactionsRef}
+            ref={transactionsRef}
             className={`rounded-2xl p-6 shadow-sm transition-colors duration-300 ${darkMode
               ? "border border-slate-800 bg-slate-900"
               : "border border-slate-300 bg-slate-200"
@@ -479,29 +458,41 @@ function App() {
                       }
                     >
                       <DialogHeader>
-                        <DialogTitle>Add Transaction</DialogTitle>
+                        <DialogTitle>
+                          {editingId ? "Edit Transaction" : "Add Transaction"}
+                        </DialogTitle>
                       </DialogHeader>
 
                       <div className="space-y-4">
                         <Input
                           placeholder="Date"
-                          value={newTransaction.date}
+                          value={editingId ? editTransaction.date : newTransaction.date}
                           onChange={(e) =>
-                            setNewTransaction({
-                              ...newTransaction,
-                              date: e.target.value,
-                            })
+                            editingId
+                              ? setEditTransaction({
+                                ...editTransaction,
+                                date: e.target.value,
+                              })
+                              : setNewTransaction({
+                                ...newTransaction,
+                                date: e.target.value,
+                              })
                           }
                         />
 
                         <Input
                           placeholder="Category"
-                          value={newTransaction.category}
+                          value={editingId ? editTransaction.category : newTransaction.category}
                           onChange={(e) =>
-                            setNewTransaction({
-                              ...newTransaction,
-                              category: e.target.value,
-                            })
+                            editingId
+                              ? setEditTransaction({
+                                ...editTransaction,
+                                category: e.target.value,
+                              })
+                              : setNewTransaction({
+                                ...newTransaction,
+                                category: e.target.value,
+                              })
                           }
                         />
 
@@ -518,25 +509,34 @@ function App() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="income">Income</SelectItem>
-                            <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem style={{ backgroundColor: "green", color: "white" }} value="income">
+                              Income
+                            </SelectItem>
+                            <SelectItem style={{ backgroundColor: "red", color: "white" }} value="expense">
+                              Expense
+                            </SelectItem>
                           </SelectContent>
                         </Select>
 
                         <Input
                           placeholder="Amount"
                           type="number"
-                          value={newTransaction.amount}
+                          value={editingId ? editTransaction.amount : newTransaction.amount}
                           onChange={(e) =>
-                            setNewTransaction({
-                              ...newTransaction,
-                              amount: e.target.value,
-                            })
+                            editingId
+                              ? setEditTransaction({
+                                ...editTransaction,
+                                amount: e.target.value,
+                              })
+                              : setNewTransaction({
+                                ...newTransaction,
+                                amount: e.target.value,
+                              })
                           }
                         />
 
                         <Button
-                          onClick={handleAddTransaction}
+                          onClick={editingId ? handleEditTransaction : handleAddTransaction}
                           className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
                         >
                           Save Transaction
@@ -560,6 +560,7 @@ function App() {
                     <TableHead className="text-slate-400">Type</TableHead>
                     <TableHead className="text-slate-400">Amount</TableHead>
                     <TableHead className="text-slate-400">Status</TableHead>
+                    <TableHead className="text-slate-400">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -601,6 +602,33 @@ function App() {
 
                       <TableCell>
                         <Badge variant="secondary">{tx.status}</Badge>
+                      </TableCell>
+
+                      {/*table edit button*/}
+                      <TableCell>
+                        {role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingId(tx.id);
+                              setEditTransaction({
+                                date: tx.date,
+                                category: tx.category,
+                                type: tx.type,
+                                amount: tx.amount,
+                                status: tx.status,
+                              });
+                              setOpen(true);
+                            }}
+                            className={`rounded-lg ${darkMode
+                              ? "border-slate-700 bg-slate-800 text-white hover:bg-slate-700"
+                              : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
+                              }`}
+                          >
+                            Edit
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -695,67 +723,61 @@ function App() {
           </section>
 
 
-         {/* Settings */}
-         <section
-  ref={settingsRef}
-  className={`rounded-2xl p-6 shadow-sm transition-colors duration-300 ${
-    darkMode
-      ? "border border-slate-800 bg-slate-900"
-      : "border border-slate-300 bg-slate-200"
-  }`}
->
-  <div className="space-y-4">
-    <div>
-      <h3
-        className={`text-lg font-semibold ${
-          darkMode ? "text-white" : "text-slate-900"
-        }`}
-      >
-        Preferences
-      </h3>
-      <p
-        className={`text-sm ${
-          darkMode ? "text-slate-400" : "text-slate-600"
-        }`}
-      >
-        Quick overview of current dashboard configuration
-      </p>
-    </div>
+          {/* Settings */}
+          <section
+            ref={settingsRef}
+            className={`rounded-2xl p-6 shadow-sm transition-colors duration-300 ${darkMode
+              ? "border border-slate-800 bg-slate-900"
+              : "border border-slate-300 bg-slate-200"
+              }`}
+          >
+            <div className="space-y-4">
+              <div>
+                <h3
+                  className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"
+                    }`}
+                >
+                  Preferences
+                </h3>
+                <p
+                  className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"
+                    }`}
+                >
+                  Quick overview of current dashboard configuration
+                </p>
+              </div>
 
-    <div className="grid grid-cols-3 gap-4">
-      <div
-        className={`rounded-xl p-4 ${
-          darkMode ? "bg-slate-800" : "bg-slate-300"
-        }`}
-      >
-        <p className="text-sm text-slate-400">Current Role</p>
-        <h4 className="mt-1 text-lg font-semibold capitalize">{role}</h4>
-      </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div
+                  className={`rounded-xl p-4 ${darkMode ? "bg-slate-800" : "bg-slate-300"
+                    }`}
+                >
+                  <p className="text-sm text-slate-400">Current Role</p>
+                  <h4 className="mt-1 text-lg font-semibold capitalize">{role}</h4>
+                </div>
 
-      <div
-        className={`rounded-xl p-4 ${
-          darkMode ? "bg-slate-800" : "bg-slate-300"
-        }`}
-      >
-        <p className="text-sm text-slate-400">Theme Mode</p>
-        <h4 className="mt-1 text-lg font-semibold">
-          {darkMode ? "Dark" : "Light"}
-        </h4>
-      </div>
+                <div
+                  className={`rounded-xl p-4 ${darkMode ? "bg-slate-800" : "bg-slate-300"
+                    }`}
+                >
+                  <p className="text-sm text-slate-400">Theme Mode</p>
+                  <h4 className="mt-1 text-lg font-semibold">
+                    {darkMode ? "Dark" : "Light"}
+                  </h4>
+                </div>
 
-      <div
-        className={`rounded-xl p-4 ${
-          darkMode ? "bg-slate-800" : "bg-slate-300"
-        }`}
-      >
-        <p className="text-sm text-slate-400">Transactions Count</p>
-        <h4 className="mt-1 text-lg font-semibold">
-          {transactions.length}
-        </h4>
-      </div>
-    </div>
-  </div>
-</section>
+                <div
+                  className={`rounded-xl p-4 ${darkMode ? "bg-slate-800" : "bg-slate-300"
+                    }`}
+                >
+                  <p className="text-sm text-slate-400">Transactions Count</p>
+                  <h4 className="mt-1 text-lg font-semibold">
+                    {transactions.length}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </section>
 
 
         </main>
