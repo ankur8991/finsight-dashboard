@@ -160,6 +160,54 @@ function App() {
       .includes(search.toLowerCase())
   );
 
+  const getPercentageChange = (current, previous) => {
+    if (previous === 0) return 0;
+    return (((current - previous) / previous) * 100).toFixed(1);
+  };
+
+
+
+  const midPoint = Math.floor(transactions.length / 2);
+
+  const previousTransactions = transactions.slice(midPoint);
+  const currentTransactions = transactions.slice(0, midPoint);
+
+  const previousIncomeTotal = previousTransactions
+    .filter((tx) => tx.type === "income")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const previousExpenseTotal = previousTransactions
+    .filter((tx) => tx.type === "expense")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const previousBalance = previousIncomeTotal - previousExpenseTotal;
+
+  const currentIncomeTotal = currentTransactions
+    .filter((tx) => tx.type === "income")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const currentExpenseTotal = currentTransactions
+    .filter((tx) => tx.type === "expense")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const currentBalance = currentIncomeTotal - currentExpenseTotal;
+
+  const balanceGrowth = getPercentageChange(
+    currentBalance,
+    previousBalance
+  );
+
+  const incomeGrowth = getPercentageChange(
+    currentIncomeTotal,
+    previousIncomeTotal
+  );
+
+  const expenseGrowth = getPercentageChange(
+    currentExpenseTotal,
+    previousExpenseTotal
+  );
+
+
   const highestExpense = transactions
     .filter((tx) => tx.type === "expense")
     .sort((a, b) => b.amount - a.amount)[0];
@@ -272,15 +320,15 @@ function App() {
       {/* Main Layout */}
       <div className="flex">
         {/* Sidebar */}
-        
+
 
         {/* Dashboard Content */}
         <main className="mt-[72px] h-[calc(100vh-72px)] overflow-y-auto p-6 space-y-6 w-full">
           {/* Summary Cards */}
-          <section ref={dashboardRef} className="grid grid-cols-4 gap-6">
+          <section ref={dashboardRef} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Total Balance */}
             <Card
-              className={`h-[120px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[120px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -294,14 +342,15 @@ function App() {
               <CardContent>
                 <h2 className="text-3xl font-bold">₹{totalBalance.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-emerald-400">
-                  +12.5% from last month
+                  {balanceGrowth > 0 ? "+" : ""}
+                  {balanceGrowth}% from last month
                 </p>
               </CardContent>
             </Card>
 
             {/* Monthly Income */}
             <Card
-              className={`h-[120px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[120px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -315,14 +364,15 @@ function App() {
               <CardContent>
                 <h2 className="text-3xl font-bold">₹{totalIncome.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-emerald-400">
-                  +8.2% from last month
+                  {incomeGrowth > 0 ? "+" : ""}
+                  {incomeGrowth}% from last month
                 </p>
               </CardContent>
             </Card>
 
             {/* Monthly Expenses */}
             <Card
-              className={`h-[120px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[120px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -336,14 +386,15 @@ function App() {
               <CardContent>
                 <h2 className="text-3xl font-bold">₹{totalExpenses.toLocaleString()}</h2>
                 <p className="mt-2 text-xs text-red-400">
-                  -3.8% from last month
+                  {expenseGrowth > 0 ? "+" : ""}
+                  {expenseGrowth}% from last month
                 </p>
               </CardContent>
             </Card>
 
             {/* Savings Rate */}
             <Card
-              className={`h-[120px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[120px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -415,7 +466,7 @@ function App() {
               : "border border-slate-300 bg-slate-200"
               }`}
           >
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3
                   className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"
@@ -431,12 +482,12 @@ function App() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto min-w-0">
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search transactions..."
-                  className={`w-64 ${darkMode
+                  className={`w-full sm:w-64 min-w-0 ${darkMode
                     ? "border-slate-700 bg-slate-950 text-white"
                     : "border-slate-300 bg-slate-100 text-slate-900"
                     }`}
@@ -639,10 +690,10 @@ function App() {
           </section>
 
           {/* Insights */}
-          <section ref={insightsRef} className="grid grid-cols-3 gap-6">
+          <section ref={insightsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Highest Spending */}
             <Card
-              className={`h-[140px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[140px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -669,7 +720,7 @@ function App() {
 
             {/* Monthly Growth */}
             <Card
-              className={`h-[140px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[140px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -696,7 +747,7 @@ function App() {
 
             {/* Savings Opportunity */}
             <Card
-              className={`h-[140px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+              className={`min-h-[140px] h-auto rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
                 ? "border-slate-800 bg-slate-900 text-white"
                 : "border-slate-300 bg-slate-200 text-slate-900"
                 }`}
@@ -747,7 +798,7 @@ function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div
                   className={`rounded-xl p-4 ${darkMode ? "bg-slate-800" : "bg-slate-300"
                     }`}
