@@ -15,6 +15,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
 import {
   Table,
@@ -49,7 +53,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 function App() {
 
-  const mainRef = useRef(null);
+  // const mainRef = useRef(null);
 
   const [darkMode, setDarkMode] = useState(true);
   const [role, setRole] = useState("admin");
@@ -110,33 +114,6 @@ function App() {
   const transactionsRef = useRef(null);
   const insightsRef = useRef(null);
   const settingsRef = useRef(null);
-
-
-
-  const handleEditTransaction = () => {
-    setTransactions((prev) =>
-      prev.map((tx) =>
-        tx.id === editingId
-          ? {
-            ...tx,
-            ...editTransaction,
-            amount: Number(editTransaction.amount),
-          }
-          : tx
-      )
-    );
-
-    setEditingId(null);
-    setOpen(false);
-
-    setEditTransaction({
-      date: "",
-      category: "",
-      type: "income",
-      amount: "",
-      status: "Completed",
-    });
-  };
 
 
 
@@ -227,33 +204,101 @@ function App() {
   }));
 
 
-  const handleAddTransaction = () => {
-    if (
-      !newTransaction.date ||
-      !newTransaction.category ||
-      !newTransaction.amount
-    ) {
-      return;
-    }
+  const categoryData = transactions
+    .filter((tx) => tx.type === "expense")
+    .reduce((acc, tx) => {
+      const existing = acc.find(
+        (item) => item.name === tx.category
+      );
 
-    const transaction = {
-      id: Date.now(),
-      ...newTransaction,
-      amount: Number(newTransaction.amount),
-    };
+      if (existing) {
+        existing.value += tx.amount;
+      } else {
+        acc.push({
+          name: tx.category,
+          value: tx.amount,
+        });
+      }
 
-    setTransactions((prev) => [transaction, ...prev]);
+      return acc;
+    }, []);
 
-    setNewTransaction({
-      date: "",
-      category: "",
-      type: "expense",
-      amount: "",
-      status: "Completed",
-    });
+  const COLORS = [
+    "#10b981",
+    "#ef4444",
+    "#06b6d4",
+    "#f59e0b",
+    "#8b5cf6",
+  ];
 
-    setOpen(false);
+
+ const handleAddTransaction = () => {
+  if (
+    !newTransaction.date ||
+    !newTransaction.category ||
+    !newTransaction.amount
+  ) {
+    return;
+  }
+
+  const transaction = {
+    id: Date.now(),
+    ...newTransaction,
+    amount: Number(newTransaction.amount),
   };
+
+  setTransactions((prev) => [transaction, ...prev]);
+
+  setNewTransaction({
+    date: "",
+    category: "",
+    type: "expense",
+    amount: "",
+    status: "Completed",
+  });
+
+  setOpen(false);
+};
+
+const handleEditClick = (tx) => {
+  setEditingId(tx.id);
+
+  setEditTransaction({
+    date: tx.date,
+    category: tx.category,
+    type: tx.type,
+    amount: tx.amount,
+    status: tx.status,
+  });
+
+  setOpen(true);
+};
+
+const handleEditTransaction = () => {
+  setTransactions((prev) =>
+    prev.map((tx) =>
+      tx.id === editingId
+        ? {
+            ...tx,
+            ...editTransaction,
+            amount: Number(editTransaction.amount),
+          }
+        : tx
+    )
+  );
+
+  setEditingId(null);
+
+  setEditTransaction({
+    date: "",
+    category: "",
+    type: "expense",
+    amount: "",
+    status: "Completed",
+  });
+
+  setOpen(false);
+};
 
 
 
@@ -458,6 +503,72 @@ function App() {
             </CardContent>
           </Card>
 
+
+
+          {/* Category Distribution */}
+          <section className="grid grid-cols-1 gap-6">
+            <Card
+              className={`w-full h-[420px] rounded-2xl shadow-sm transition-colors duration-300 ${darkMode
+                  ? "border-slate-800 bg-slate-900 text-white"
+                  : "border-slate-300 bg-slate-200 text-slate-900"
+                }`}
+            >
+              <CardHeader>
+                <CardTitle
+                  className={darkMode ? "text-white" : "text-slate-900"}
+                >
+                  Spending Breakdown
+                </CardTitle>
+                <p
+                  className={
+                    darkMode ? "text-slate-400" : "text-slate-600"
+                  }
+                >
+                  Expense distribution by category
+                </p>
+              </CardHeader>
+
+              <CardContent className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label
+                    >
+                      {categoryData.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: darkMode
+                          ? "#0f172a"
+                          : "#e2e8f0",
+                        border: darkMode
+                          ? "1px solid #334155"
+                          : "1px solid #94a3b8",
+                        borderRadius: "12px",
+                        color: darkMode ? "#fff" : "#0f172a",
+                      }}
+                    />
+
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </section>
+
+
+
           {/* Transactions */}
           <section
             ref={transactionsRef}
@@ -548,14 +659,19 @@ function App() {
                         />
 
                         <Select
-                          value={newTransaction.type}
-                          onValueChange={(value) =>
-                            setNewTransaction({
-                              ...newTransaction,
-                              type: value,
-                            })
-                          }
-                        >
+  value={editingId ? editTransaction.type : newTransaction.type}
+  onValueChange={(value) =>
+    editingId
+      ? setEditTransaction({
+          ...editTransaction,
+          type: value,
+        })
+      : setNewTransaction({
+          ...newTransaction,
+          type: value,
+        })
+  }
+>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -615,75 +731,76 @@ function App() {
                   </TableRow>
                 </TableHeader>
 
+
                 <TableBody>
-                  {filteredTransactions.map((tx) => (
-                    <TableRow
-                      key={tx.id}
-                      className={`${darkMode
-                        ? "border-slate-800 hover:bg-slate-800"
-                        : "border-slate-300 hover:bg-slate-100"
-                        }`}
-                    >
-                      <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
-                        {tx.date}
-                      </TableCell>
+                  {filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((tx) => (
+                      <TableRow
+                        key={tx.id}
+                        className={`${darkMode
+                          ? "border-slate-800 hover:bg-slate-800"
+                          : "border-slate-300 hover:bg-slate-100"
+                          }`}
+                      >
+                        <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
+                          {tx.date}
+                        </TableCell>
 
-                      <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
-                        {tx.category}
-                      </TableCell>
+                        <TableCell className={darkMode ? "text-white" : "text-slate-900"}>
+                          {tx.category}
+                        </TableCell>
 
-                      <TableCell>
-                        <Badge
+                        <TableCell>
+                          <Badge
+                            className={
+                              tx.type === "income"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-red-500 text-white"
+                            }
+                          >
+                            {tx.type === "income" ? "Income" : "Expense"}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell
                           className={
-                            tx.type === "income"
-                              ? "bg-emerald-500 text-white"
-                              : "bg-red-500 text-white"
+                            tx.type === "income" ? "text-emerald-400" : "text-red-400"
                           }
                         >
-                          {tx.type === "income" ? "Income" : "Expense"}
-                        </Badge>
-                      </TableCell>
+                          {tx.type === "income" ? "+" : "-"}₹
+                          {tx.amount.toLocaleString()}
+                        </TableCell>
 
-                      <TableCell
-                        className={tx.type === "income" ? "text-emerald-400" : "text-red-400"}
-                      >
-                        {tx.type === "income" ? "+" : "-"}₹
-                        {tx.amount.toLocaleString()}
-                      </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{tx.status}</Badge>
+                        </TableCell>
 
-                      <TableCell>
-                        <Badge variant="secondary">{tx.status}</Badge>
-                      </TableCell>
-
-                      {/*table edit button*/}
-                      <TableCell>
                         {role === "admin" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingId(tx.id);
-                              setEditTransaction({
-                                date: tx.date,
-                                category: tx.category,
-                                type: tx.type,
-                                amount: tx.amount,
-                                status: tx.status,
-                              });
-                              setOpen(true);
-                            }}
-                            className={`rounded-lg ${darkMode
-                              ? "border-slate-700 bg-slate-800 text-white hover:bg-slate-700"
-                              : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
-                              }`}
-                          >
-                            Edit
-                          </Button>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditClick(tx)}
+                            >
+                              Edit
+                            </Button>
+                          </TableCell>
                         )}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={role === "admin" ? 6 : 5}
+                        className={`h-24 text-center ${darkMode ? "text-slate-400" : "text-slate-600"
+                          }`}
+                      >
+                        No transactions found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
+
 
               </Table>
             </div>
