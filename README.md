@@ -34,6 +34,14 @@ The dashboard is intentionally built with a **product-oriented frontend mindset*
 * Automatically updates when transactions are **added or edited**
 * Uses cumulative transaction flow for balance trend visualization
 
+ ### 🥧 Spending Breakdown
+
+* Dynamic **expense distribution by category**
+* Pie chart powered by **Recharts**
+* Automatically recalculates from live transaction data
+* Updates instantly after **Add / Edit transaction**
+* Fully responsive with dark/light mode compatibility
+
 ### 💳 Transaction Management
 
 * Search transactions in real time
@@ -119,6 +127,16 @@ npm run dev
 
 ---
 
+## 🔗 Live Demo & Repository
+
+### 🌐 Live Demo
+https://finsight-dashboard-five.vercel.app
+
+### 💻 GitHub Repository
+https://github.com/ankur8991/finsight-dashboard
+
+---
+
 ## 🎯 Product Thinking Decisions
 
 A few deliberate product-level decisions were made during development:
@@ -164,13 +182,11 @@ The goal was not just to complete the assignment, but to present a **production-
 
 ## 🌐 Deployment
 
-Recommended deployment: **Vercel**
+ deployment: **Vercel**
 
 ```bash
 npm run build
 ```
-
-Deploy the generated Vite app for a live recruiter demo.
 
 ---
 
